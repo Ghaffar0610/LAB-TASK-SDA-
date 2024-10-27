@@ -1,1 +1,206 @@
 
+Observer Pattern Assignment
+Objective
+The objective of this assignment is to implement the Observer Design Pattern in Java. The focus is on creating a listener system where various components can be notified when certain events occur. You’ll be adding a custom listener, SMSSupportListener, that checks the SMS length upon notification and takes action accordingly.
+
+Overview of the Observer Pattern
+The Observer Pattern is a behavioral design pattern where an object (subject) maintains a list of dependents (observers) that are notified of any changes in the subject's state. This is useful for implementing distributed event handling systems.
+
+In this assignment, we’ll be using an EventManager to manage the registration and notification of event listeners. Listeners such as EmailNotificationListener, LogOpenListener, and SMSSupportListener will be notified when specific events occur in the system.
+
+Part 1: Basic Structure and Existing Code
+The provided code already includes:
+
+EventManager: Manages the registration of listeners and notifies them of events.
+Editor: Acts as the subject (publisher) that triggers events such as open and save.
+EventListener Interface: A generic observer interface that all listeners implement.
+Concrete Listeners: Includes EmailNotificationListener and LogOpenListener, which perform specific actions when notified.
+Below is the code provided for the initial setup:
+
+1. EventManager Class
+java
+Copy code
+package refactoring_guru.observer.example.publisher;
+
+import refactoring_guru.observer.example.listeners.EventListener;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class EventManager {
+    Map<String, List<EventListener>> listeners = new HashMap<>();
+
+    public EventManager(String... operations) {
+        for (String operation : operations) {
+            this.listeners.put(operation, new ArrayList<>());
+        }
+    }
+
+    public void subscribe(String eventType, EventListener listener) {
+        List<EventListener> users = listeners.get(eventType);
+        users.add(listener);
+    }
+
+    public void unsubscribe(String eventType, EventListener listener) {
+        List<EventListener> users = listeners.get(eventType);
+        users.remove(listener);
+    }
+
+    public void notify(String eventType, File file) {
+        List<EventListener> users = listeners.get(eventType);
+        for (EventListener listener : users) {
+            listener.update(eventType, file);
+        }
+    }
+}
+2. Editor Class
+The Editor class is responsible for publishing events, specifically "open" and "save" events.
+
+java
+Copy code
+package refactoring_guru.observer.example.editor;
+
+import refactoring_guru.observer.example.publisher.EventManager;
+import java.io.File;
+
+public class Editor {
+    public EventManager events;
+    private File file;
+
+    public Editor() {
+        this.events = new EventManager("open", "save");
+    }
+
+    public void openFile(String filePath) {
+        this.file = new File(filePath);
+        events.notify("open", file);
+    }
+
+    public void saveFile() throws Exception {
+        if (this.file != null) {
+            events.notify("save", file);
+        } else {
+            throw new Exception("Please open a file first.");
+        }
+    }
+}
+3. EventListener Interface
+java
+Copy code
+package refactoring_guru.observer.example.listeners;
+
+import java.io.File;
+
+public interface EventListener {
+    void update(String eventType, File file);
+}
+4. Concrete Listeners
+EmailNotificationListener
+java
+Copy code
+package refactoring_guru.observer.example.listeners;
+
+import java.io.File;
+
+public class EmailNotificationListener implements EventListener {
+    private String email;
+
+    public EmailNotificationListener(String email) {
+        this.email = email;
+    }
+
+    @Override
+    public void update(String eventType, File file) {
+        System.out.println("Email to " + email + ": Someone has performed " + eventType + " operation with the following file: " + file.getName());
+    }
+}
+LogOpenListener
+java
+Copy code
+package refactoring_guru.observer.example.listeners;
+
+import java.io.File;
+
+public class LogOpenListener implements EventListener {
+    private File log;
+
+    public LogOpenListener(String fileName) {
+        this.log = new File(fileName);
+    }
+
+    @Override
+    public void update(String eventType, File file) {
+        System.out.println("Save to log " + log + ": Someone has performed " + eventType + " operation with the following file: " + file.getName());
+    }
+}
+Part 2: Custom SMSSupportListener
+Requirement
+Add another listener, SMSSupportListener, which checks the length of a default SMS message. If the SMS exceeds 160 characters, it should issue a warning. Otherwise, it should "send" the SMS to a designated phone number.
+
+Implementation
+Create a new package observer.eventsmanagement.
+Define the SMSSupportListener Class in this package.
+Code for SMSSupportListener
+java
+Copy code
+package observer.eventsmanagement;
+
+import refactoring_guru.observer.example.listeners.EventListener;
+import java.io.File;
+
+public class SMSSupportListener implements EventListener {
+    private String phoneNumber;
+    private String defaultSMS;
+
+    public SMSSupportListener(String phoneNumber, String defaultSMS) {
+        this.phoneNumber = phoneNumber;
+        this.defaultSMS = defaultSMS;
+    }
+
+    @Override
+    public void update(String eventType, File file) {
+        if (defaultSMS.length() > 160) {
+            System.out.println("Warning: Default SMS exceeds 160 characters. Please define a valid SMS.");
+        } else {
+            System.out.println("Sending SMS to " + phoneNumber + ": " + defaultSMS);
+        }
+    }
+}
+Part 3: Testing the Implementation
+Demo Class
+The Demo class will initialize the Editor and add instances of LogOpenListener, EmailNotificationListener, and SMSSupportListener to observe the events.
+
+java
+Copy code
+package refactoring_guru.observer.example;
+
+import refactoring_guru.observer.example.editor.Editor;
+import refactoring_guru.observer.example.listeners.EmailNotificationListener;
+import refactoring_guru.observer.example.listeners.LogOpenListener;
+import observer.eventsmanagement.SMSSupportListener;
+
+public class Demo {
+    public static void main(String[] args) {
+        Editor editor = new Editor();
+        editor.events.subscribe("open", new LogOpenListener("/path/to/log/file.txt"));
+        editor.events.subscribe("save", new EmailNotificationListener("admin@example.com"));
+        editor.events.subscribe("save", new SMSSupportListener("+1234567890", "This is a sample SMS text."));
+
+        try {
+            editor.openFile("test.txt");
+            editor.saveFile();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+Explanation
+SMSSupportListener: Checks if the default SMS is longer than 160 characters. If it is, a warning is printed; otherwise, it "sends" the SMS.
+Demo: Subscribes SMSSupportListener to the "save" event. When saveFile is called, it triggers this listener.
+Expected Output
+Running the Demo class should result in:
+
+Logging an open event.
+Sending an email and triggering the SMS check on the save event.
