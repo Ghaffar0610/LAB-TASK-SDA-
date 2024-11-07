@@ -1,3 +1,4 @@
+// Domain Layer: User.java
 public class User {
     private String name;
     private String email;
@@ -9,7 +10,7 @@ public class User {
         this.password = password;
     }
 
-    // Getters and Setters
+    // Getters and setters
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 

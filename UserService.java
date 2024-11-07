@@ -1,3 +1,4 @@
+// Application Layer: UserService.java
 public class UserService {
     private UserDAO userDAO;
 
@@ -12,7 +13,7 @@ public class UserService {
 
         User user = new User(name, email, password);
         boolean isSaved = userDAO.save(user);
-        
+
         return isSaved ? "Account created successfully!" : "Error in creating account.";
     }
 }

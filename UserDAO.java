@@ -1,3 +1,4 @@
+// Infrastructure Layer: UserDAO.java
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,4 +17,3 @@ public class UserDAO {
         return usersDatabase.get(email);
     }
 }
-
